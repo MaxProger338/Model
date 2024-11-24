@@ -16,7 +16,7 @@ class DoubleLinkedList
 				Node* next;
 				Node* prev;
 
-				Node(T value) : value{ value }, next{ nullptr }, prev{ nullptr } {}
+				Node(const T& value) : value{ value }, next{ nullptr }, prev{ nullptr } {}
 		};
 
 		Node* _first;
@@ -108,8 +108,6 @@ class DoubleLinkedList
 				_first = nullptr;
 				_last = nullptr;
 			}
-
-			cout << "Drop list" << endl;
 		}
 
 		bool isEmpty() const
@@ -153,7 +151,7 @@ class DoubleLinkedList
 			return getNodeByIndex(index)->value;
 		}
 
-		T setByIndex(uint index, T value)
+		T setByIndex(uint index, const T& value)
 		{
 			Node* node = getNodeByIndex(index);
 			T current = node->value;
@@ -190,7 +188,7 @@ class DoubleLinkedList
 			return value;
 		}
 
-		DoubleLinkedList& insertByIndex(uint index, T value)
+		DoubleLinkedList& insertByIndex(uint index, const T& value)
 		{
 			if (index >= getSize())
 				throw "Out of range";
@@ -220,9 +218,10 @@ class DoubleLinkedList
 			}
 		}
 
-		DoubleLinkedList& addBack(T value)
+		DoubleLinkedList& addBack(const T& value)
 		{
 			Node* node = new Node(value);
+
 			if (isEmpty())
 			{
 				_first = node;
@@ -238,7 +237,7 @@ class DoubleLinkedList
 			return *this;
 		}
 
-		DoubleLinkedList& addForward(T value)
+		DoubleLinkedList& addForward(const T& value)
 		{
 			Node* node = new Node(value);
 			if (isEmpty())
@@ -269,6 +268,11 @@ class DoubleLinkedList
 				_last = current->prev;
 				_last->next = nullptr;
 			}
+			else
+			{
+				_last  = nullptr;
+				_first = nullptr;
+			}
 
 			delete current;
 
@@ -287,6 +291,11 @@ class DoubleLinkedList
 			{
 				_first = current->next;
 				_first->prev = nullptr;
+			}
+			else
+			{
+				_first = nullptr;
+				_last  = nullptr;
 			}
 
 			delete current;
@@ -309,7 +318,7 @@ class DoubleLinkedList
 			return deleteByIndex(index);
 		}
 
-		T operator()(uint index, T value)
+		T operator()(uint index, const T& value)
 		{
 			return setByIndex(index, value);
 		}
@@ -378,7 +387,7 @@ class DynamicQueue
 			return *this;
 		}
 
-		DynamicQueue& enqueue(T value)
+		DynamicQueue& enqueue(const T& value)
 		{
 			_list.addBack(value);
 
@@ -416,11 +425,6 @@ class Route
 		Route(const Route& route): _route{ route._route } {}
 
 		Route(Route&& route) : _route{ move(route._route) } {}
-
-		~Route()
-		{
-			cout << "Drop route" << endl;
-		}
 
 		uint getLength() const
 		{
@@ -478,11 +482,6 @@ class Passenger
 
 		Passenger(string name, string destination): _name{name}, _destination{destination} {}
 
-		~Passenger()
-		{
-			cout << "Drop passenger" << endl;
-		}
-
 		string setName(string name)
 		{ 
 			string current = _name;
@@ -520,11 +519,11 @@ class Passenger
 			return *this;
 		}
 
-		friend ostream& operator<<(ostream& out, const Passenger& passenger)
+		Passenger& print(string shift = "", string number = "")
 		{
-			out << "Name: " << passenger._name  << "\tDestination: " << passenger._destination << endl;
+			cout << shift << number << (number == "" ? "" : ". ") << "Name: " << _name  << "\tDestination : " << _destination << endl;
 
-			return out;
+			return *this;
 		}
 };
 
@@ -554,7 +553,7 @@ class Bus
 				_passengers.addBack(i);
 			}
 
-			_route                   = route;
+			_route = route;
 		}
 
 		Bus(string name, uint maxAmountPassengers, uint currentAmountPassengers, const Route& route, const Passenger* passengers) :
@@ -581,11 +580,6 @@ class Bus
 		Bus(Bus&& bus):
 			_name{ bus._name }, _maxAmountPassengers{ bus._maxAmountPassengers }, 
 			_route{ bus._route }, _passengers{ move(bus._passengers) } {}
-
-		~Bus()
-		{
-			cout << "Drop bus" << endl;
-		}
 
 		string getName() const
 		{
@@ -616,7 +610,7 @@ class Bus
 			return _route;
 		}
 
-		Passenger setPassengerAt(uint index, Passenger passenger)
+		Passenger setPassengerAt(uint index, const Passenger& passenger)
 		{
 			if (index >= _passengers.getSize())
 				throw "Out of range";
@@ -632,7 +626,7 @@ class Bus
 			return _passengers[index];
 		}
 
-		Bus& addPassenger(Passenger passenger)
+		Bus& addBackPassenger(const Passenger& passenger)
 		{
 			if (_passengers.getSize() + 1 > _maxAmountPassengers)
 				throw "Out of range";
@@ -642,28 +636,66 @@ class Bus
 			return *this;
 		}
 
-		Passenger deletePassenger()
+		Passenger deleteBackPassenger()
 		{
 			return _passengers.deleteBack();
 		}
 
-		friend ostream& operator<<(ostream& out, const Bus& bus)
+		Bus& addForwardPassenger(const Passenger& passenger)
 		{
-			out << "Name: "					   << bus._name << endl;
-			out << "currentAmountPassengers: " << bus._passengers.getSize() << endl;
-			out << "maxAmountPassengers: "	   << bus._maxAmountPassengers << endl;
+			if (_passengers.getSize() + 1 > _maxAmountPassengers)
+				throw "Out of range";
 
-			out << endl << "Passengers: " << endl << endl;
+			_passengers.addForward(passenger);
 
-			for (size_t i = 0; i < bus._passengers.getSize(); i++)
+			return *this;
+		}
+
+		Passenger deleteForwardPassenger()
+		{
+			return _passengers.deleteForward();
+		}
+
+		Bus& insertPassengerAt(uint index, const Passenger& passenger)
+		{
+			if (_passengers.getSize() + 1 > _maxAmountPassengers)
+				throw "Out of range";
+
+			if (index >= _passengers.getSize())
+				throw "Out of range";
+
+			_passengers.insertByIndex(index, passenger);
+
+			return *this;
+		}
+
+		Passenger deletePassengerAt(uint index)
+		{
+			if (index >= _passengers.getSize())
+				throw "Out of range";
+
+			return _passengers(index);
+		}
+
+		Bus& print(string shift = "")
+		{
+			cout << shift << "Name: "					   << _name << endl;
+			cout << shift << "Current Amount Passengers: " << _passengers.getSize() << endl;
+			cout << shift << "Max Amount Passengers: "	   << _maxAmountPassengers << endl;
+
+			cout << endl << shift << "Passengers: " << endl << endl;
+
+			for (size_t i = 0; i < _passengers.getSize(); i++)
 			{
-				out << '\t' << i + 1 << ".  " << bus._passengers[i] << endl;
+				_passengers[i].print("\t\t", to_string(i + 1));
+
+				cout << endl;
 			}
 
-			out << "Route: " << endl << endl;
-			out << '\t' << bus._route << endl;
+			cout << shift << "Route: " << endl << endl;
+			cout << shift << "\t" << _route << endl;
 
-			return out;
+			return *this;
 		}
 };
 
@@ -680,33 +712,228 @@ class Stopping
 		string        _name;
 		STOPPING_TYPE _type;
 
-		DoubleLinkedList<Bus> _buses;
+		DynamicQueue<Bus> _buses;
+		DoubleLinkedList<Passenger> _passengers;
 
 	public:
-		Stopping(string name) : Stopping(name, NOT_FINAL) {}
+		Stopping(string name, STOPPING_TYPE type) : _name{ name }, _type{ type } {}
 
-		Stopping(string name, STOPPING_TYPE type): _name{name}, _type{type} {}
-
-		~Stopping()
+		Stopping& enqueueBus(const Bus& bus)
 		{
-			cout << "Drop stopping" << endl;
-		}
-
-		Stopping& addBus(Bus bus)
-		{
-			_buses.addBack(bus);
+			_buses.enqueue(bus);
 
 			return *this;
 		}
 
-		void deleteBus()
+		Bus dequeueBus()
 		{
-			_buses.deleteBack();
+			return _buses.dequeue();
 		}
 
-		friend ostream& operator<<(ostream& out, const Stopping& stopping)
+		Bus peekBus() const
 		{
-			out << stopping._buses.getFirst();
+			return _buses.peek();
+		}
+
+		Stopping& addBackPassenger(const Passenger& passenger)
+		{
+			_passengers.addBack(passenger);
+
+			return *this;
+		}
+
+		Passenger deleteBackPassenger()
+		{
+			return _passengers.deleteBack();
+		}
+
+		Stopping& addForwardPassenger(const Passenger& passenger)
+		{
+			_passengers.addForward(passenger);
+
+			return *this;
+		}
+
+		Passenger deleteForwardPassenger()
+		{
+			return _passengers.deleteForward();
+		}
+
+		Passenger deletePassengerAt(uint index)
+		{
+			return _passengers.deleteByIndex(index);
+		}
+
+		Passenger setPassengerAt(uint index, const Passenger& passenger)
+		{
+			if (index >= _passengers.getSize())
+				throw "Out of range";
+
+			return _passengers(index, passenger);
+		}
+
+		Passenger getPassengerAt(uint index) const
+		{
+			if (index >= _passengers.getSize())
+				throw "Out of range";
+
+			return _passengers[index];
+		}
+
+		Stopping& insertPassengerAt(uint index, const Passenger& passenger)
+		{
+			if (index >= _passengers.getSize())
+				throw "Out of range";
+
+			_passengers.insertByIndex(index, passenger);
+
+			return *this;
+		}
+
+		Stopping& print(string shift = "")
+		{
+			cout << shift << "Stopping Name: " << _name << endl;
+			cout << shift << "Stopping Type: ";
+			switch (_type)
+			{
+				case NOT_FINAL:
+					cout << shift << "NOT_FINAL";
+					break;
+
+				default:
+					cout << shift << "FINAL";
+					break;
+			}
+			cout << endl << endl;
+
+			cout << shift << "Bus Amount: " << _buses.getSize() << endl << endl;
+			cout << shift << "Last Bus: " << endl << endl;
+			if (!_buses.isEmpty())
+			{
+				_buses.peek().print("\t" + shift);
+			} 
+			else
+			{
+				cout << shift << "\tNot buses" << endl;
+			}
+
+			cout << shift << "Passengers Amount: " << _passengers.getSize() << endl << endl;
+
+			cout << shift << "Passengers: " << endl << endl;
+
+			if (!_passengers.isEmpty())
+			{
+				for (size_t i = 0; i < _passengers.getSize(); i++)
+				{
+					_passengers[i].print("\t" + shift, to_string(i + 1));
+
+					cout << endl;
+				}
+			}
+			else
+			{
+				cout << shift << "\tNot passengers" << endl;
+			}
+
+			return *this;
+		}
+};
+
+class Model
+{
+	private:
+		class StoppingNode
+		{
+			private:
+				Stopping _stopping;
+
+				float _averageTimePassengersAtDay;
+				float _averageTimePassengersAtNight;
+				float _averageTimeBusesAtDay;
+				float _averageTimeBusesAtNight;
+
+			public:
+				StoppingNode(
+					const Stopping& stopping, 
+					float averageTimePassengersAtDay,
+					float averageTimePassengersAtNight, 
+					float averageTimeBusesAtDay, 
+					float averageTimeBusesAtNight
+				) : 
+					_stopping{stopping},
+					_averageTimePassengersAtDay{ averageTimePassengersAtDay }, 
+					_averageTimePassengersAtNight{ averageTimePassengersAtNight },
+					_averageTimeBusesAtDay{ averageTimeBusesAtDay },
+					_averageTimeBusesAtNight{ averageTimeBusesAtNight } 
+				{}
+
+				Stopping& getStopping()
+				{
+					return _stopping;
+				}
+
+				float getAverageTimePassengersAtDay() const
+				{
+					return _averageTimePassengersAtDay;
+				}
+
+				float getAverageTimePassengersAtNight() const
+				{
+					return _averageTimePassengersAtNight;
+				}
+
+				float getAverageTimeBusesAtDay() const
+				{
+					return _averageTimeBusesAtDay;
+				}
+
+				float getAverageTimeBusesAtNight() const
+				{
+					return _averageTimeBusesAtNight;
+				}
+
+		};
+
+		DoubleLinkedList<StoppingNode> _stoppingNodes;
+
+	public:
+		Model() {}
+
+		Model& addStopping(
+			const Stopping& stopping,
+			float averageTimePassengersAtDay,
+			float averageTimePassengersAtNight,
+			float averageTimeBusesAtDay,
+			float averageTimeBusesAtNight
+		)
+		{
+			StoppingNode stoppingNode(stopping, averageTimePassengersAtDay, averageTimePassengersAtNight, averageTimeBusesAtDay, averageTimeBusesAtNight);
+
+			_stoppingNodes.addBack(stoppingNode);
+
+			return *this;
+		}
+
+		friend ostream& operator<<(ostream& out, const Model& model)
+		{
+			out << "Amount Stoppings: " << model._stoppingNodes.getSize() << endl << endl; 
+			
+			for (size_t i = 0; i < model._stoppingNodes.getSize(); i++)
+			{
+				out << i + 1 << ". " << endl;
+
+				out << "\tAverage Time Passengers At Day: "   << model._stoppingNodes[i].getAverageTimePassengersAtDay() << endl;
+				out << "\tAverage Time Passengers At Night: " << model._stoppingNodes[i].getAverageTimePassengersAtNight() << endl;
+				out << "\tAverage Time Buses At Day: "        << model._stoppingNodes[i].getAverageTimeBusesAtDay() << endl;
+				out << "\tAverage Time Buses At Night: "	  << model._stoppingNodes[i].getAverageTimeBusesAtNight() << endl;
+
+				out << endl;
+
+				model._stoppingNodes[i].getStopping().print("\t");
+
+				out << endl;
+			}
+			out << endl;
 
 			return out;
 		}
@@ -722,14 +949,22 @@ int main()
 	Passenger pass2("Fazber338", "в DNS");
 	Passenger pass3("KingGor", "В академию");
 
+	Passenger pass4("Arthur", "Домой");
+	Passenger pass5("filosof", "в mac");
+
 	Bus bus("108", 30, route, { pass1, pass2, pass3 });
 
-	//Stopping stopping("Детский сад", Stopping::NOT_FINAL);
-	//stopping.addBus(bus);
+	Stopping stopping("Детский сад", Stopping::NOT_FINAL);
 
-	//stopping.deleteBus();
+	stopping.enqueueBus(bus);
 
-	//cout << stopping << endl;
+	stopping.addBackPassenger(pass4);
+	stopping.addBackPassenger(pass5);
+
+	Model model;
+	model.addStopping(stopping, 1, 2, 3, 4);
+
+	cout << model << endl;
 
 	return 0;
-}
+} 
