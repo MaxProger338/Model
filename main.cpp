@@ -1,6 +1,7 @@
 #include <iostream>
 #include <initializer_list>
 #include <string>
+#include <Windows.h>
 using namespace std;
 
 typedef unsigned int uint;
@@ -701,22 +702,19 @@ class Bus
 
 class Stopping
 {
-	public:
-		enum STOPPING_TYPE
-		{
-			FINAL,
-			NOT_FINAL
-		};
-
 	private:
-		string        _name;
-		STOPPING_TYPE _type;
+		string _name;
 
 		DynamicQueue<Bus> _buses;
 		DoubleLinkedList<Passenger> _passengers;
 
 	public:
-		Stopping(string name, STOPPING_TYPE type) : _name{ name }, _type{ type } {}
+		Stopping(string name) : _name{ name } {}
+
+		string getName() const
+		{
+			return _name;
+		}
 
 		Stopping& enqueueBus(const Bus& bus)
 		{
@@ -792,22 +790,11 @@ class Stopping
 
 		Stopping& print(string shift = "")
 		{
-			cout << shift << "Stopping Name: " << _name << endl;
-			cout << shift << "Stopping Type: ";
-			switch (_type)
-			{
-				case NOT_FINAL:
-					cout << shift << "NOT_FINAL";
-					break;
+			cout << shift << "Stopping Name: " << _name << endl << endl;
 
-				default:
-					cout << shift << "FINAL";
-					break;
-			}
-			cout << endl << endl;
-
-			cout << shift << "Bus Amount: " << _buses.getSize() << endl << endl;
+			cout << shift << "Bus Amount: " << _buses.getSize() << endl;
 			cout << shift << "Last Bus: " << endl << endl;
+
 			if (!_buses.isEmpty())
 			{
 				_buses.peek().print("\t" + shift);
@@ -817,7 +804,9 @@ class Stopping
 				cout << shift << "\tNot buses" << endl;
 			}
 
-			cout << shift << "Passengers Amount: " << _passengers.getSize() << endl << endl;
+			cout << endl << endl;
+
+			cout << shift << "Passengers Amount: " << _passengers.getSize() << endl;
 
 			cout << shift << "Passengers: " << endl << endl;
 
@@ -896,20 +885,44 @@ class Model
 
 		DoubleLinkedList<StoppingNode> _stoppingNodes;
 
+		bool _isStoppingExists(string name) const
+		{
+			for (size_t i = 0; i < _stoppingNodes.getSize(); i++)
+			{
+				if (name == _stoppingNodes[i].getStopping().getName())
+					return true;
+			}
+
+			return false;
+		}
+
 	public:
 		Model() {}
 
 		Model& addStopping(
-			const Stopping& stopping,
+			string name,
 			float averageTimePassengersAtDay,
 			float averageTimePassengersAtNight,
 			float averageTimeBusesAtDay,
 			float averageTimeBusesAtNight
 		)
 		{
+			if (_isStoppingExists(name))
+			{
+				throw "This stopping is already exists";
+			}
+
+			Stopping stopping(name);
 			StoppingNode stoppingNode(stopping, averageTimePassengersAtDay, averageTimePassengersAtNight, averageTimeBusesAtDay, averageTimeBusesAtNight);
 
 			_stoppingNodes.addBack(stoppingNode);
+
+			return *this;
+		}
+
+		Model& simulate()
+		{
+			
 
 			return *this;
 		}
@@ -943,26 +956,17 @@ int main()
 {
 	setlocale(LC_ALL, "Ru");
 
-	Route route({ "Детский сад", "в DNS", "В академию" });
+	Route route1({ "Детский сад", "В академию", "в DNS"});
 
 	Passenger pass1("Kostos", "Детский сад");
 	Passenger pass2("Fazber338", "в DNS");
 	Passenger pass3("KingGor", "В академию");
-
-	Passenger pass4("Arthur", "Домой");
-	Passenger pass5("filosof", "в mac");
-
-	Bus bus("108", 30, route, { pass1, pass2, pass3 });
-
-	Stopping stopping("Детский сад", Stopping::NOT_FINAL);
-
-	stopping.enqueueBus(bus);
-
-	stopping.addBackPassenger(pass4);
-	stopping.addBackPassenger(pass5);
+	Bus bus1("108", 30, route1, { pass1, pass2 });
 
 	Model model;
-	model.addStopping(stopping, 1, 2, 3, 4);
+
+	model.addStopping("Детский сад", 1, 2, 3, 4);
+	model.addStopping("Кинотеатр 'Первомайский'", 4, 8, 12, 16);
 
 	cout << model << endl;
 
