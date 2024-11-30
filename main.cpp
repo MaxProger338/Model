@@ -165,27 +165,28 @@ class DoubleLinkedList
 		T deleteByIndex(uint index)
 		{
 			if (index >= getSize())
-				throw "Out of range";
-
-			T value;
-
-			if (index == 0)
-				value = deleteForward();
-
-			else if (index == getSize() - 1)
-				value = deleteBack();
-
-			else
 			{
-				Node* node = getNodeByIndex(index);
-				value = node->value;
-
-				node->prev->next = node->next;
-				node->next->prev = node->prev;
-
-				delete node;
+				throw "Out of range";
 			}
 
+			if (index == 0)
+			{
+				return deleteForward();
+			}
+
+			else if (index == getSize() - 1)
+			{
+				return deleteBack();
+			}
+
+			Node* node = getNodeByIndex(index);
+			T value{ node->value };
+
+			node->prev->next = node->next;
+			node->next->prev = node->prev;
+
+			delete node;
+				
 			return value;
 		}
 
@@ -483,6 +484,34 @@ class Passenger
 
 		Passenger(string name, string destination): _name{name}, _destination{destination} {}
 
+		Passenger(string destination) : _destination{ destination } 
+		{
+			string arrNames[] = {
+				"Kostos pc",
+				"Kostos mobile",
+				"Fazber338",
+				"KingGor",
+				"Arthur Morgan",
+				"Marakasy",
+				"filosof",
+				"KOT",
+				"Solara",
+				"Gendalf_grey",
+				"VilkaLojka",
+				"ReXeR",
+				"Сотый",
+				"Lonodo21",
+				"LOR1XFN22",
+				"Вампус",
+				"SuperMax",
+				"T.Vaskin",
+			};
+
+			int length = sizeof(arrNames) / sizeof(arrNames[0]);
+
+			_name = arrNames[rand() % length];
+		}
+
 		string setName(string name)
 		{ 
 			string current = _name;
@@ -678,6 +707,13 @@ class Bus
 			return _passengers(index);
 		}
 
+		Bus& clearPassengers()
+		{
+			_passengers.clear();
+
+			return *this;
+		}
+
 		Bus& print(string shift = "")
 		{
 			cout << shift << "Name: "					   << _name << endl;
@@ -688,7 +724,7 @@ class Bus
 
 			for (size_t i = 0; i < _passengers.getSize(); i++)
 			{
-				_passengers[i].print("\t\t", to_string(i + 1));
+				_passengers[i].print("\t" + shift, to_string(i + 1));
 
 				cout << endl;
 			}
@@ -731,6 +767,11 @@ class Stopping
 		Bus peekBus() const
 		{
 			return _buses.peek();
+		}
+
+		uint getAmountPassengers() const
+		{
+			return _passengers.getSize();
 		}
 
 		Stopping& addBackPassenger(const Passenger& passenger)
@@ -841,6 +882,27 @@ class Model
 				float _averageTimeBusesAtDay;
 				float _averageTimeBusesAtNight;
 
+				time_t _milliSeconds1;
+				time_t _milliSeconds2;
+				time_t _milliSeconds3;
+				time_t _milliSeconds4;
+
+				bool _isTimeOut(const SYSTEMTIME& currentTimestamp, time_t& time, float comparer) const
+				{
+					time_t currentHours = (currentTimestamp.wDay * 24) + currentTimestamp.wHour;
+					time_t currentMinutes = (currentHours * 60) + currentTimestamp.wMinute;
+					time_t currentSeconds = (currentMinutes * 60) + currentTimestamp.wSecond;
+					time_t currentMilliSeconds = (currentSeconds * 1000) + currentTimestamp.wMilliseconds;
+
+					if (currentMilliSeconds - time > comparer * 1000)
+					{
+						time = currentMilliSeconds;
+						return true;
+					}
+
+					return false;
+				}
+
 			public:
 				StoppingNode(
 					const Stopping& stopping, 
@@ -881,16 +943,111 @@ class Model
 					return _averageTimeBusesAtNight;
 				}
 
+				bool isTimeOutPassengersAtDay(const SYSTEMTIME& currentTimestamp)
+				{
+					return _isTimeOut(currentTimestamp, _milliSeconds1, _averageTimePassengersAtDay);
+				}
+
+				bool isTimeOutPassengersAtNight(const SYSTEMTIME& currentTimestamp)
+				{
+					return _isTimeOut(currentTimestamp, _milliSeconds2, _averageTimePassengersAtNight);
+				}
+
+				bool isTimeOutBusesAtDay(const SYSTEMTIME& currentTimestamp)
+				{
+					return _isTimeOut(currentTimestamp, _milliSeconds3, _averageTimeBusesAtDay);
+				}
+
+				bool isTimeOutBusesAtNight(const SYSTEMTIME& currentTimestamp)
+				{
+					return _isTimeOut(currentTimestamp, _milliSeconds4, _averageTimeBusesAtNight);
+				}
 		};
 
-		DoubleLinkedList<StoppingNode> _stoppingNodes;
+		class PassengerNode
+		{
+			private:
+				Passenger _passenger;
+				string    _startPlace;
+
+			public:
+				PassengerNode(const Passenger& passenger, string startPlace): _passenger{passenger}, _startPlace{startPlace} {}
+
+				Passenger& getPassenger()
+				{
+					return _passenger;
+				}
+
+				string getStartPlace() const
+				{
+					return _startPlace;
+				}
+		};
+
+		DoubleLinkedList<StoppingNode>  _stoppingNodes;
+		DoubleLinkedList<PassengerNode> _passengerNodes;
+		DoubleLinkedList<Bus>          _buses;
 
 		bool _isStoppingExists(string name) const
 		{
 			for (size_t i = 0; i < _stoppingNodes.getSize(); i++)
 			{
 				if (name == _stoppingNodes[i].getStopping().getName())
+				{
 					return true;
+				}
+			}
+
+			return false;
+		}
+
+		Stopping* _getStoppingByName(string name) const
+		{
+			for (size_t i = 0; i < _stoppingNodes.getSize(); i++)
+			{
+				if (name == _stoppingNodes[i].getStopping().getName())
+				{
+					return &_stoppingNodes[i].getStopping();
+				}
+			}
+
+			return nullptr;
+		}
+
+		int _getBusIndexByRoute(string name) const
+		{
+			for (size_t i = 0; i < _buses.getSize(); i++)
+			{
+				if (_buses[i].getRoute().getAt(0) == name)
+				{
+					return i;
+				}
+			}
+
+			return -1;
+		}
+
+		int _getPassengerIndexByStartPlace(string startPlace) const
+		{
+			for (size_t i = 0; i < _passengerNodes.getSize(); i++)
+			{
+				if (_passengerNodes[i].getStartPlace() == startPlace)
+				{
+					return i;
+				}
+			}
+
+			return -1;
+		}
+
+		bool _isInRoute(const Route& route, string destination) const
+		{
+			for (size_t i = 0; i < route.getLength(); i++)
+			{
+				if (route.getAt(i) == destination)
+				{
+					return true;
+				}
 			}
 
 			return false;
@@ -920,15 +1077,179 @@ class Model
 			return *this;
 		}
 
-		Model& simulate()
+		Model& addStopping(
+			const Stopping& stopping,
+			float averageTimePassengersAtDay,
+			float averageTimePassengersAtNight,
+			float averageTimeBusesAtDay,
+			float averageTimeBusesAtNight
+		)
 		{
-			
+			if (_isStoppingExists(stopping.getName()))
+			{
+				throw "This stopping is already exists";
+			}
+
+			StoppingNode stoppingNode(stopping, averageTimePassengersAtDay, averageTimePassengersAtNight, averageTimeBusesAtDay, averageTimeBusesAtNight);
+
+			_stoppingNodes.addBack(stoppingNode);
 
 			return *this;
 		}
 
+		Model& addBus(const Bus& bus)
+		{
+			for (size_t i = 0; i < bus.getRoute().getLength(); i++)
+			{
+				if (!_isStoppingExists(bus.getRoute().getAt(i)))
+				{
+					throw "Incorrect Route";
+				}
+			}
+
+			_buses.addBack(bus);
+
+			return *this;
+		}
+
+		Model& addPassenger(string startPlace, const Passenger& passenger)
+		{
+			if (!_isStoppingExists(startPlace) || !_isStoppingExists(passenger.getDestination()))
+			{
+				throw "Incorrect Destination";
+			}
+
+			PassengerNode passengerNode(passenger, startPlace);
+
+			_passengerNodes.addBack(passengerNode);
+
+			return *this;
+		}
+
+		Model& simulate(const SYSTEMTIME& timestamp)
+		{
+			for (size_t i = 0; i < _stoppingNodes.getSize(); i++)
+			{
+				Stopping* stopping{ &_stoppingNodes[i].getStopping() };
+
+				if (_stoppingNodes[i].isTimeOutPassengersAtDay(timestamp))
+				{
+					int index = _getPassengerIndexByStartPlace(stopping->getName());
+
+					if (index != -1)
+					{
+						stopping->addBackPassenger(_passengerNodes.deleteByIndex(index).getPassenger());
+					}
+				}
+
+				/*if (_stoppingNodes[i].isTimeOutPassengersAtNight(timestamp))
+				{
+					cout << i + 1 << "\t2" << endl;
+				}*/
+
+				if (_stoppingNodes[i].isTimeOutBusesAtDay(timestamp))
+				{
+					int index = _getBusIndexByRoute(stopping->getName());
+
+					if (index != -1)
+					{
+						stopping->enqueueBus(_buses.deleteByIndex(index));
+
+						// Посажиры выходят и испаряются 
+						Bus currentBus{ stopping->peekBus() };
+
+						Bus bus{ currentBus };
+						bus.clearPassengers();
+
+						for (size_t i = 0; i < currentBus.getCurrentAmountPassengers(); i++)
+						{
+							bus.addBackPassenger(currentBus.getPassengerAt(i));
+						}
+
+						// Посажиры входят
+						for (size_t i = 0; i < stopping->getAmountPassengers(); i++)
+						{
+							if (bus.getCurrentAmountPassengers() == bus.getMaxAmountPassengers())
+							{
+								break;
+							}
+
+							if (_isInRoute(bus.getRoute(), stopping->getPassengerAt(i).getDestination()))
+							{
+								bus.addBackPassenger(stopping->getPassengerAt(i));
+							}
+						}
+
+						// Автобус уезжает
+						stopping->dequeueBus();
+
+						_buses.addBack(bus);
+					}
+				}
+
+				/*if (_stoppingNodes[i].isTimeOutBusesAtNight(timestamp))
+				{
+					cout << i + 1 << "\t4" << endl;
+				}*/
+			}
+
+			return *this;
+		}
+
+		void printBuffers(string shift = "") const
+		{
+			cout << shift << "Buses Amount: " << _buses.getSize() << endl;
+			
+			cout << endl;
+			cout << shift << "Buses: " << endl;
+
+			if (!_buses.isEmpty())
+			{
+				for (size_t i = 0; i < _buses.getSize(); i++)
+				{
+					cout << "\t" + shift << i + 1 << ". " << endl;
+
+					_buses[i].print("\t\t" + shift);
+				}
+			}
+			else
+			{
+				cout << endl;
+				cout << shift << "\tNot buses" << endl;
+			}
+
+			cout << endl;
+
+			cout << shift << "Passsengers Amount: " << _passengerNodes.getSize() << endl;
+
+			cout << endl;
+			cout << shift << "Passengers: " << endl;
+
+			if (!_passengerNodes.isEmpty())
+			{
+				for (size_t i = 0; i < _passengerNodes.getSize(); i++)
+				{
+					cout << "\t" + shift << i + 1 << ". " << endl;
+
+					_passengerNodes[i].getPassenger().print("\t\t" + shift);
+			
+					cout << endl;
+				}
+			}
+			else
+			{
+				cout << endl;
+				cout << shift << "\tNot passengers" << endl;
+			}
+
+			cout << endl;
+		}
+
 		friend ostream& operator<<(ostream& out, const Model& model)
 		{
+			cout << "Buffers: " << endl << endl;
+			model.printBuffers("\t");
+
 			out << "Amount Stoppings: " << model._stoppingNodes.getSize() << endl << endl; 
 			
 			for (size_t i = 0; i < model._stoppingNodes.getSize(); i++)
@@ -954,21 +1275,40 @@ class Model
 
 int main()
 {
+	srand(time(NULL));
+
 	setlocale(LC_ALL, "Ru");
 
-	Route route1({ "Детский сад", "В академию", "в DNS"});
+	/*Stopping stopping1("Детский сад");
+	Bus bus("108", 30, Route{ "Детский сад" }, {});
+	Passenger pass("Детский сад");*/
 
-	Passenger pass1("Kostos", "Детский сад");
-	Passenger pass2("Fazber338", "в DNS");
-	Passenger pass3("KingGor", "В академию");
-	Bus bus1("108", 30, route1, { pass1, pass2 });
+	//Model model;
+	//model.addStopping(stopping1, 1, 200000, 2, 40000000);
+	
+	//model.addBus(bus);
+	//model.addPassenger("Детский сад", pass);
 
-	Model model;
+	//while (1)
+	//{
+	//	SYSTEMTIME timestamp;
+	//	GetLocalTime(&timestamp);
 
-	model.addStopping("Детский сад", 1, 2, 3, 4);
-	model.addStopping("Кинотеатр 'Первомайский'", 4, 8, 12, 16);
+	//	model.simulate(timestamp);
 
-	cout << model << endl;
+
+	//	static time_t time = 0;
+	//	time_t currentHours = (timestamp.wDay * 24) + timestamp.wHour;
+	//	time_t currentMinutes = (currentHours * 60) + timestamp.wMinute;
+	//	time_t currentSeconds = (currentMinutes * 60) + timestamp.wSecond;
+	//	time_t currentMilliSeconds = (currentSeconds * 1000) + timestamp.wMilliseconds;
+
+	//	if (currentMilliSeconds - time > 1000)
+	//	{
+	//		time = currentMilliSeconds;
+	//		cout << model << endl;
+	//	}
+	//}
 
 	return 0;
 } 
