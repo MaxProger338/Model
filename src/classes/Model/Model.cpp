@@ -144,18 +144,6 @@ int Model::
     {
         for (size_t i = 0; i < _buses.getSize(); i++)
         {
-            // if (_buses[i].getRoute().getAt(0) == name)
-            // {
-            //     return i;
-            // }
-            // for (size_t j = 0; j < _buses.getAt(i).getRoute().getLength(); j++)
-            // {
-            //     if (_buses[i].getRoute().getAt(j) == name)
-            //     {
-            //         return i;
-            //     }
-            // }
-
             int index = _buses[i].getNextStoppingIndex();
 
             if (index == -1)
@@ -333,8 +321,39 @@ bool Model::
         return false;
     }
 
+bool Model::
+    addBusToStopping(Stopping* stopping)
+    {
+        int index = _getBusIndexByStoppingInRoute(stopping->getName());
+
+        // Если нашёлся автобус
+        if (index != -1)
+        {
+            // Добавляем автобус на остановку и Убираем автобус с дороги
+            stopping->enqueueBus(_buses.deleteAt(index));
+
+            Bus bus{ stopping->peekBus() };
+
+            // Пассажиры выходят и добавляются на остановку
+            bus = _getOffPassengers(bus, stopping);
+
+            // Пассажиры входят в автобус и удаляются с остановки
+            bus = _getOnPassengers(bus, stopping);
+
+            bus.setNextStopping();
+
+            stopping->dequeueBus();
+
+            _buses.addBack(bus);
+
+            return true;
+        }
+
+        return false;
+    }
+
 Model& Model::
-    simulate()
+    simulate(const SYSTEMTIME& timestamp)
     {
         for (size_t i = 0; i < _stoppingNodes.getSize(); i++)
         {
@@ -342,46 +361,31 @@ Model& Model::
             Stopping* stopping = &_stoppingNodes[i].getStopping();
 
             // ----- 1 Condition -----
+            if (_stoppingNodes[i].isTimeOutPassengersAtDay(timestamp))
             {
                 addPassengerToStopping(stopping);
             }
 
             // ----- 2 Condition -----
+            if (_stoppingNodes[i].isTimeOutPassengersAtNight(timestamp))
             {
-                
+                std::cout << "2 Condition" << '\n';
+                // ...
             }
 
             // ----- 3 Condition -----
+            if (_stoppingNodes[i].isTimeOutBusesAtDay(timestamp))
             {
-                int index = _getBusIndexByStoppingInRoute(stopping->getName());
-
-                // Если нашёлся автобус
-                if (index != -1)
-                {
-                    // Добавляем автобус на остановку и Убираем автобус с дороги
-                    stopping->enqueueBus(_buses.deleteAt(index));
-
-                    Bus bus{ stopping->peekBus() };
-
-                    // Пассажиры выходят и добавляются на остановку
-                    bus = _getOffPassengers(bus, stopping);
-
-                    // Пассажиры входят в автобус и удаляются с остановки
-                    bus = _getOnPassengers(bus, stopping);
-
-                    bus.setNextStopping();
-
-                    stopping->dequeueBus();
-
-                    _buses.addBack(bus);
-                }
+                std::cout << "3 Condition" << '\n';
+                addBusToStopping(stopping);
             }
 
             // ----- 4 Condition -----
+            if (_stoppingNodes[i].isTimeOutBusesAtNight(timestamp))
             {
-
+                std::cout << "4 Condition" << '\n';
+                // ...
             }
-
         }
 
         return *this;

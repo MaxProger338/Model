@@ -23,19 +23,32 @@ int main(int argc, char** argv)
         stopping3.addBackPassenger(Passenger("filosof", "KYLIBACA"));
         stopping3.addBackPassenger(Passenger("kostos", "Academy TOP"));
 
-        model.addStopping(stopping1, 0, 0, 0, 0);
-        model.addStopping(stopping2, 0, 0, 0, 0);
-        model.addStopping(stopping3, 0, 0, 0, 0);
+        model.addStopping(stopping1, 1, 2, 4, 8);
+        model.addStopping(stopping2, 1, 2, 4, 8);
+        model.addStopping(stopping3, 1, 2, 4, 8);
 
         model.addBus(Bus("108", 30, Route{"Academy TOP", "KYLIBACA"}, {Passenger("SKUF", "KYLIBACA")}));
         model.addBus(Bus("41", 10, Route{"House", "KYLIBACA", "Academy TOP"}, {}));
 
-        model.simulate();
-        model.simulate();
-        model.simulate();
-        model.simulate();
+        while (1)
+        {
+        	SYSTEMTIME timestamp;
+        	GetLocalTime(&timestamp);
 
-        std::cout << model << std::endl;
+        	model.simulate(timestamp);
+
+        	static time_t time         = 0;
+        	time_t currentHours        = (timestamp.wDay * 24)   + timestamp.wHour;
+        	time_t currentMinutes      = (currentHours * 60)     + timestamp.wMinute;
+        	time_t currentSeconds      = (currentMinutes * 60)   + timestamp.wSecond;
+        	time_t currentMilliSeconds = (currentSeconds * 1000) + timestamp.wMilliseconds;
+ 
+        	if (currentMilliSeconds - time > 1000)
+        	{
+        		time = currentMilliSeconds;
+        		std::cout << model << std::endl;
+            }
+        }
     }
     catch (const char* str)
     {

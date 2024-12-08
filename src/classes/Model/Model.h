@@ -27,10 +27,10 @@ class Model
 				float _averageTimeBusesAtDay;
 				float _averageTimeBusesAtNight;
 
-				time_t _milliSeconds1;
-				time_t _milliSeconds2;
-				time_t _milliSeconds3;
-				time_t _milliSeconds4;
+				time_t _milliSeconds1 = 0;
+				time_t _milliSeconds2 = 0;
+				time_t _milliSeconds3 = 0;
+				time_t _milliSeconds4 = 0;
 
                 bool _isTimeOut(const SYSTEMTIME& currentTimestamp, time_t& time, float comparer) const;
 
@@ -94,6 +94,8 @@ class Model
 
         bool addPassengerToStopping(Stopping* stopping);
 
+        bool addBusToStopping(Stopping* stopping);
+
     public:
         Model();
 
@@ -117,7 +119,7 @@ class Model
 
         Model& addBus(const Bus& bus);
 
-        Model& simulate();
+        Model& simulate(const SYSTEMTIME& timestamp);
 
         void printBuffers(std::string shift = "") const;
 
