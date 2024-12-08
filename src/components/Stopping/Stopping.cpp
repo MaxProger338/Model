@@ -145,3 +145,18 @@ Stopping& Stopping::
 
         return *this;
     }
+
+Stopping& Stopping::
+    operator=(const Stopping& src)
+    {
+        if (&src == this)
+        {
+            return *this;
+        }
+
+        _name       = src._name;
+        _passengers = src._passengers;
+        _buses      = src._buses;
+
+        return *this;
+    }

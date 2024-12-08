@@ -7,6 +7,7 @@
 
 #include "../../components/Stopping/Stopping.h"
 #include "../../components/Passenger/Passenger.h"
+#include "../../components/Route/Route.h"
 #include "../../components/Bus/Bus.h"
 
 #include "Windows.h"
@@ -83,6 +84,16 @@ class Model
 
         int _getPassengerIndexByStartPlace(std::string startPlace) const;
 
+        int _getBusIndexByStoppingInRoute(std::string name) const;
+
+        Bus _getOffPassengers(const Bus& bus, Stopping* stopping) const;
+
+        Bus _getOnPassengers(const Bus& bus, Stopping* stopping) const;
+
+        bool _isExistsStoppingInRoute(std::string stoppingName, const Route& route) const;
+
+        bool addPassengerToStopping(Stopping* stopping);
+
     public:
         Model();
 
@@ -103,6 +114,8 @@ class Model
 		);
 
         Model& addPassenger(std::string startPlace, const Passenger& passenger);
+
+        Model& addBus(const Bus& bus);
 
         Model& simulate();
 

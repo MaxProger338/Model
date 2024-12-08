@@ -15,6 +15,12 @@ class Route
 {
     private:
         DoubleLinkedList<std::string> _route;
+        int                           _nextStoppingIndex;
+        bool                          _stateRoute;
+
+        bool addSetNextStopping();
+
+        bool subSetNextStopping();
 
     public:
         Route();
@@ -24,6 +30,10 @@ class Route
         Route(const Route& route);
 
         Route(Route&& route);
+
+        Route& setNextStopping();
+
+        int getNextStoppingIndex() const;
 
         uint getLength() const;
 

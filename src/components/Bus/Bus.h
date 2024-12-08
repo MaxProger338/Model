@@ -59,7 +59,13 @@ class Bus
 
         Bus& clearPassengers();
 
+        int getNextStoppingIndex() const;
+
+        Bus& setNextStopping();
+
         Bus& print(std::string shift = "");
+
+        Bus& operator=(const Bus& src);
 };
 
 #include "Bus.cpp"

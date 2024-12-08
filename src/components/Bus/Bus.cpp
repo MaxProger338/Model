@@ -185,6 +185,20 @@ Bus& Bus::
         return *this;
     }
 
+int Bus::
+    getNextStoppingIndex() const
+    {
+        return _route.getNextStoppingIndex();
+    }
+
+Bus& Bus::
+    setNextStopping()
+    {
+        _route.setNextStopping();
+
+        return *this;
+    }
+
 Bus& Bus::
     print(std::string shift)
     {
@@ -203,6 +217,23 @@ Bus& Bus::
 
         std::cout << shift << "Route: " << std::endl << std::endl;
         std::cout << shift << "\t"      << _route << std::endl;
+
+        return *this;
+    }
+
+Bus& Bus::
+    operator=(const Bus& src)
+    {
+        if (&src == this)
+        {
+            return *this;
+        }
+
+        _name                = src._name;
+        _maxAmountPassengers = src._maxAmountPassengers;
+
+        _route               = src._route;
+        _passengers          = src._passengers;
 
         return *this;
     }

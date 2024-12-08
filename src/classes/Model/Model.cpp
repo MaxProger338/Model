@@ -139,6 +139,106 @@ int Model::
         return -1;
     }
 
+int Model::
+    _getBusIndexByStoppingInRoute(std::string name) const
+    {
+        for (size_t i = 0; i < _buses.getSize(); i++)
+        {
+            // if (_buses[i].getRoute().getAt(0) == name)
+            // {
+            //     return i;
+            // }
+            // for (size_t j = 0; j < _buses.getAt(i).getRoute().getLength(); j++)
+            // {
+            //     if (_buses[i].getRoute().getAt(j) == name)
+            //     {
+            //         return i;
+            //     }
+            // }
+
+            int index = _buses[i].getNextStoppingIndex();
+
+            if (index == -1)
+            {
+                return -1;
+            }
+
+            if (_buses[i].getRoute().getAt(index) == name)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+bool Model::
+    _isExistsStoppingInRoute(std::string stoppingName, const Route& route) const
+    {
+        for (size_t i = 0; i < route.getLength(); i++)
+        {
+            if (stoppingName == route.getAt(i))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+Bus Model::
+    _getOffPassengers(const Bus& bus, Stopping* stopping) const
+    {
+        Bus currentBus{ bus };
+        currentBus.clearPassengers();
+
+        for (size_t i = 0; i < bus.getCurrentAmountPassengers(); i++)
+        {
+            if (bus.getPassengerAt(i).getDestination() != stopping->getName())
+            {
+                currentBus.addBackPassenger(bus.getPassengerAt(i));
+            }
+            else
+            {
+                Passenger passenger{ bus.getPassengerAt(i) };
+                passenger.setName(passenger.getName() + " GOOOL");
+                passenger.setDestination("");
+
+                stopping->addBackPassenger(passenger);
+            }
+        }
+
+        return currentBus;
+    }
+
+Bus Model::
+    _getOnPassengers(const Bus& bus, Stopping* stopping) const
+    {
+        Bus currentBus{ bus };
+
+        Stopping stopping2{ *stopping };
+        uint counterDeletePassengers = 0;
+
+        for (size_t i = 0; i < stopping->getAmountPassengers(); i++)
+        {
+            if (currentBus.getCurrentAmountPassengers() == currentBus.getMaxAmountPassengers())
+            {
+                break;
+            }
+
+            if (_isExistsStoppingInRoute(stopping->getPassengerAt(i).getDestination(), currentBus.getRoute()))
+            {
+                currentBus.addBackPassenger(stopping->getPassengerAt(i));
+                stopping2.deletePassengerAt(i - counterDeletePassengers);
+                counterDeletePassengers++;
+            }
+        }
+
+        *stopping = stopping2;
+
+        return currentBus;
+    }
+
 Model& Model::
     addStopping(
         std::string name,
@@ -204,6 +304,36 @@ Model& Model::
     }
 
 Model& Model::
+    addBus(const Bus& bus)
+    {
+        for (size_t i = 0; i < bus.getRoute().getLength(); i++)
+        {
+            if (_getStoppingIndexByName(bus.getRoute().getAt(i)) == -1)
+            {
+                throw "Incorrect Route";
+            }
+        }
+
+        _buses.addBack(bus);
+
+        return *this;
+    }
+
+bool Model::
+    addPassengerToStopping(Stopping* stopping)
+    {
+        int index = _getPassengerIndexByStartPlace(stopping->getName());
+
+        if (index != -1)
+        {
+            stopping->addBackPassenger(_passengerNodes.deleteAt(index).getPassenger());
+            return true;
+        }
+
+        return false;
+    }
+
+Model& Model::
     simulate()
     {
         for (size_t i = 0; i < _stoppingNodes.getSize(); i++)
@@ -212,19 +342,46 @@ Model& Model::
             Stopping* stopping = &_stoppingNodes[i].getStopping();
 
             // ----- 1 Condition -----
-            int index = _getPassengerIndexByStartPlace(stopping->getName());
-
-            if (index != -1)
             {
-                stopping->addBackPassenger(_passengerNodes.deleteAt(index).getPassenger());
+                addPassengerToStopping(stopping);
             }
 
             // ----- 2 Condition -----
-            
+            {
+                
+            }
 
             // ----- 3 Condition -----
+            {
+                int index = _getBusIndexByStoppingInRoute(stopping->getName());
+
+                // Если нашёлся автобус
+                if (index != -1)
+                {
+                    // Добавляем автобус на остановку и Убираем автобус с дороги
+                    stopping->enqueueBus(_buses.deleteAt(index));
+
+                    Bus bus{ stopping->peekBus() };
+
+                    // Пассажиры выходят и добавляются на остановку
+                    bus = _getOffPassengers(bus, stopping);
+
+                    // Пассажиры входят в автобус и удаляются с остановки
+                    bus = _getOnPassengers(bus, stopping);
+
+                    bus.setNextStopping();
+
+                    stopping->dequeueBus();
+
+                    _buses.addBack(bus);
+                }
+            }
 
             // ----- 4 Condition -----
+            {
+
+            }
+
         }
 
         return *this;

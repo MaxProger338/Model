@@ -66,6 +66,20 @@ T DynamicQueue<T>::
     }
 
 template<typename T>
+DynamicQueue<T>& DynamicQueue<T>::
+    operator=(const DynamicQueue<T>& src)
+    {
+        if (&src == this)
+        {
+            return *this;
+        }
+
+        _list = src._list;
+
+        return *this;
+    }
+
+template<typename T>
 std::ostream& operator<<(std::ostream& out, const DynamicQueue<T>& queue)
 {
     out << queue._list << std::endl;

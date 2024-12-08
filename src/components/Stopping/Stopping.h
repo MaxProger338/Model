@@ -50,6 +50,8 @@ class Stopping
         Stopping& insertPassengerAt(uint index, const Passenger& passenger);
 
         Stopping& print(std::string shift = "");
+
+        Stopping& operator=(const Stopping& src);
 };
 
 #include "Stopping.cpp"

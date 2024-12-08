@@ -24,10 +24,10 @@ Passenger::
             "Gendalf_grey",
             "VilkaLojka",
             "ReXeR",
-            "Сотый",
+            "Cotuy",
             "Lonodo21",
             "LOR1XFN22",
-            "Вампус",
+            "Vampus",
             "SuperMax",
             "T.Vaskin",
         };

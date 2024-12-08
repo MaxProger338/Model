@@ -37,6 +37,8 @@ class DynamicQueue
 
         T peek() const;
 
+        DynamicQueue& operator=(const DynamicQueue& src);
+
         template<typename U>
         friend std::ostream& operator<<(std::ostream& out, const DynamicQueue<U>& queue);
 };
